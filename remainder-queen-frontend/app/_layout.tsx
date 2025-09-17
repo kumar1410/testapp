@@ -1,3 +1,4 @@
+import "react-native-gesture-handler";
 import * as eva from "@eva-design/eva";
 import {
   DarkTheme,

@@ -10,10 +10,12 @@ import * as secureStore from "expo-secure-store";
 
 // Prefer EXPO public env for easy configuration in CI/Render
 const publicApi = process.env.EXPO_PUBLIC_API_URL;
-let url = publicApi || "http://192.168.1.7:5000"; // Default to LAN dev
-if (!publicApi && process.env.NODE_ENV === "production") {
-  url = "https://remainder-queen-backend.onrender.com";
-}
+// let url = publicApi || "http://192.168.1.7:5000"; // Default to LAN dev
+// if (!publicApi && process.env.NODE_ENV === "production") {
+//   url = "https://remainder-queen-backend.onrender.com";
+// }
+  let url = "https://testapp-4x8g.onrender.com/";
+
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: `${url}/api/v1`,
