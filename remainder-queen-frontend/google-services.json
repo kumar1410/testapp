@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "619706309735",
+    "project_id": "remainderqueen",
+    "storage_bucket": "remainderqueen.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:619706309735:android:cb6729967ccab5908ac8c2",
+        "android_client_info": {
+          "package_name": "com.remainderqueen"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJntJHtC06ytc9EpffERrCbZo3jyk48IE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
