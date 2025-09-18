@@ -4,6 +4,7 @@ import axios, {
   AxiosInstance,
   AxiosResponse,
   AxiosRequestConfig,
+  InternalAxiosRequestConfig,
 } from "axios";
 import { router } from "expo-router";
 import * as secureStore from "expo-secure-store";
@@ -37,8 +38,8 @@ apiClient.interceptors.response.use(
 // Request interceptor
 apiClient.interceptors.request.use(
   async (
-    config: AxiosRequestConfig
-  ): Promise<AxiosRequestConfig> => {
+    config: InternalAxiosRequestConfig
+  ): Promise<InternalAxiosRequestConfig> => {
     const token = await secureStore.getItemAsync("jwtToken");
     if (token && config.headers) {
       (
