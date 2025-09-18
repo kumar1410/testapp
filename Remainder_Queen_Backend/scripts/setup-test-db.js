@@ -1,6 +1,40 @@
 require('dotenv').config();
 const mysql = require('mysql2/promise');
 
+// Enable verbose logging
+const DEBUG = true;
+
+// You can paste your Render database URL here if you have it
+const RENDER_DATABASE_URL = process.env.MYSQL_URL || '';
+
+// Function to parse database URL into connection config
+function getDatabaseConfig() {
+  if (RENDER_DATABASE_URL) {
+    try {
+      // Example URL format: mysql://user:pass@host:port/db
+      const url = new URL(RENDER_DATABASE_URL);
+      return {
+        host: url.hostname,
+        user: url.username,
+        password: url.password,
+        database: url.pathname.substring(1),
+        port: url.port || 3306
+      };
+    } catch (err) {
+      console.error('Failed to parse database URL:', err.message);
+    }
+  }
+  
+  // Fallback to individual environment variables
+  return {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT || 3306
+  };
+}
+
 // Test users to be added
 const TEST_USERS = [
   {
@@ -30,17 +64,31 @@ async function setupTestUsers() {
   let connection;
 
   try {
-    // Create database connection
-    connection = await mysql.createConnection({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME
-    });
+    const config = getDatabaseConfig();
+    
+    // Log connection attempt
+    if (DEBUG) {
+      console.log('Attempting to connect to database with config:', {
+        host: config.host,
+        user: config.user,
+        database: config.database,
+        // password hidden for security
+      });
+    }
 
-    console.log('Connected to database successfully!');
+    // Create database connection
+    connection = await mysql.createConnection(config);
+
+    console.log('✅ Connected to database successfully!');
+
+    // List existing tables
+    if (DEBUG) {
+      const [tables] = await connection.execute('SHOW TABLES');
+      console.log('\nExisting tables:', tables.map(t => Object.values(t)[0]));
+    }
 
     // Create test_users table
+    console.log('\nCreating/verifying test_users table...');
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS test_users (
         id INT PRIMARY KEY AUTO_INCREMENT,
