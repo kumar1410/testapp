@@ -10,15 +10,6 @@ import { useRouter } from "expo-router";
 import * as secureStore from "expo-secure-store";
 import React, { useState, useEffect } from "react";
 import { pingBackend } from "@/services/pingBackend";
-  const [backendStatus, setBackendStatus] = useState<{connected: boolean, status: string, message: string} | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    pingBackend().then((res) => {
-      if (mounted) setBackendStatus(res);
-    });
-    return () => { mounted = false; };
-  }, []);
 import {
   ActivityIndicator,
   StyleSheet,
@@ -36,6 +27,15 @@ export default function LoginScreen() {
   const [otpSent, setOtpSent] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
+  const [backendStatus, setBackendStatus] = useState<{connected: boolean, status: string, message: string} | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    pingBackend().then((res) => {
+      if (mounted) setBackendStatus(res);
+    });
+    return () => { mounted = false; };
+  }, []);
   // Admin/Test direct login handler
   const handleAdminLogin = async (username: "admin" | "test") => {
     setAdminMode(true);
