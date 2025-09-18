@@ -23,10 +23,26 @@ interface SendOtpRequest {
   phoneNo: string;
 }
 
+interface TestLoginRequest {
+  username: string;
+}
+
 interface SendOtpResponse {
   success: boolean;
   message: string;
   otp?: string;
+}
+
+interface LoginResponse {
+  message: string;
+  token: string;
+  user: {
+    id: number;
+    username: string;
+    role: string;
+    name: string;
+    phoneno: string;
+  };
 }
 
 interface VerifyOtpRequest {

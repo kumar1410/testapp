@@ -1,7 +1,7 @@
 import { AppButton } from "@/components/ui-kit/AppButton";
 import { useAuth } from "@/context/AuthContext";
 import { useTasks } from "@/context/TaskContext";
-import { sendOtp, verifyOtp } from "@/services/auth";
+import { sendOtp, verifyOtp, testLogin } from "@/services/auth";
 import { Input, Layout, Text } from "@ui-kitten/components";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
@@ -15,6 +15,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 
 export default function LoginScreen() {
@@ -25,6 +26,8 @@ export default function LoginScreen() {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [isTestLogin, setIsTestLogin] = useState(false);
+  const [testUsername, setTestUsername] = useState("");
   const [backendStatus, setBackendStatus] = useState<{connected: boolean, status: string, message: string} | null>(null);
 
   useEffect(() => {
@@ -34,6 +37,33 @@ export default function LoginScreen() {
     });
     return () => { mounted = false; };
   }, []);
+
+  const handleTestLogin = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      if (!testUsername) {
+        setError("Please enter a username");
+        return;
+      }
+
+      const response = await testLogin({ username: testUsername });
+      
+      if (response.isSuccess && response.result?.token) {
+        await secureStore.setItemAsync("jwtToken", response.result.token);
+        login(response.result.token);
+        router.replace("/(main)");
+      } else {
+        setError(response.errorMessages?.[0] || "Login failed");
+      }
+    } catch (err: any) {
+      console.error("Test login error:", err);
+      setError(err.response?.data?.errorMessages?.[0] || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLoginOrVerify = async () => {
     try {
