@@ -1,3 +1,36 @@
+// Direct login for test/admin user (no OTP)
+exports.testLogin = async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) {
+      return res.status(400).json(ApiResponse.error("Username is required", 400));
+    }
+    // You can change this logic to check for a specific admin/test username
+    if (username !== "admin" && username !== "test") {
+      return res.status(401).json(ApiResponse.error("Unauthorized", 401));
+    }
+    // Simulate a user object for admin/test
+    const userPayload = { id: 0, username };
+    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: "7d" });
+    return res.status(200).json(
+      ApiResponse.success(
+        {
+          message: "Test login successful",
+          token,
+          user: userPayload,
+        },
+        1
+      )
+    );
+  } catch (err) {
+    res.status(500).json(ApiResponse.error(
+      process.env.NODE_ENV === "production"
+        ? `Error in test login: ${err.message}`
+        : `Error in test login: ${err.message}\n${err.stack}`,
+      500
+    ));
+  }
+};
 const speakeasy = require("speakeasy");
 const jwt = require("jsonwebtoken");
 const Users = require("../models/users.model");
@@ -35,7 +68,7 @@ exports.sendOtp = async (req, res) => {
     const API_KEY = process.env.TWO_FACTOR_API_KEY; // 🔑 store in .env
     // const message = `Your login OTP is ${otp}. It is valid for 30 seconds.`;
 
-    const url = `https://2factor.in/API/V1/${API_KEY}/SMS/${phoneNo}/${otp}/Otp_template`;
+    const url = `https://2factor.in/API/V1/${API_KEY}/SMS/${phoneNo}/${otp}/Apptest`;
     const response = await axios.get(url);
     console.log("2factor:", response.data);
     console.log(`📲 OTP for ${phoneNo}: ${otp}`);
@@ -51,9 +84,12 @@ exports.sendOtp = async (req, res) => {
       )
     );
   } catch (err) {
-    res
-      .status(500)
-      .json(ApiResponse.error(`Error generating OTP: ${err.message}`, 500));
+    res.status(500).json(ApiResponse.error(
+      process.env.NODE_ENV === "production"
+        ? `Error generating OTP: ${err.message}`
+        : `Error generating OTP: ${err.message}\n${err.stack}`,
+      500
+    ));
   }
 };
 
@@ -109,8 +145,11 @@ exports.verifyOtp = async (req, res) => {
       )
     );
   } catch (err) {
-    res
-      .status(500)
-      .json(ApiResponse.error(`Error verifying OTP: ${err.message}`, 500));
+    res.status(500).json(ApiResponse.error(
+      process.env.NODE_ENV === "production"
+        ? `Error verifying OTP: ${err.message}`
+        : `Error verifying OTP: ${err.message}\n${err.stack}`,
+      500
+    ));
   }
 };
