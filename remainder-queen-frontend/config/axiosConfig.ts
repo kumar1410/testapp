@@ -3,12 +3,11 @@ import axios, {
   AxiosError,
   AxiosInstance,
   AxiosResponse,
-  InternalAxiosRequestConfig,
+  AxiosRequestConfig,
 } from "axios";
 import { router } from "expo-router";
 import * as secureStore from "expo-secure-store";
 
-// Base URL for the backend API
 const API_URL = "https://testapp-4x8g.onrender.com";
 
 const apiClient: AxiosInstance = axios.create({
@@ -38,8 +37,8 @@ apiClient.interceptors.response.use(
 // Request interceptor
 apiClient.interceptors.request.use(
   async (
-    config: InternalAxiosRequestConfig
-  ): Promise<InternalAxiosRequestConfig> => {
+    config: AxiosRequestConfig
+  ): Promise<AxiosRequestConfig> => {
     const token = await secureStore.getItemAsync("jwtToken");
     if (token && config.headers) {
       (

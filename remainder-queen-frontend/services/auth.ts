@@ -74,7 +74,7 @@ interface VerifyOtpResponse {
 export const testLogin = async ({ username }: { username: string }) => {
   try {
     console.log('Attempting test login with:', username);
-    const response = await apiClient.post("/api/v1/auth/test-login", { username });
+    const response = await apiClient.post("/auth/test-login", { username });
     console.log('Test login response:', response.data);
     return response.data;
   } catch (error: any) {
@@ -124,7 +124,7 @@ export const signUp = async (
   data: SignUpRequest
 ): Promise<ApiEnvelope<SignUpResult>> => {
   const response = await apiClient.post<ApiEnvelope<SignUpResult>>(
-    "/api/v1/users",
+    "/users",
     data
   );
   return response.data;

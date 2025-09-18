@@ -86,7 +86,7 @@
    - Open `remainder-queen-frontend/config/axiosConfig.ts`
    - Replace the URL:
      ```typescript
-     let url = "https://your-service-name.onrender.com";
+     let url = "httckps://your-service-name.onrender.com";
      ```
 
 2. **Test locally (optional):**
