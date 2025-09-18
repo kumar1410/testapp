@@ -28,9 +28,22 @@ interface TestLoginRequest {
 }
 
 interface SendOtpResponse {
-  success: boolean;
   message: string;
-  otp?: string;
+  phoneNo: string;
+  sessionId: string;
+}
+
+interface OtpVerifyResponse {
+  message: string;
+  token: string;
+  user: {
+    id: number;
+    phoneno: string;
+    name: string;
+    type: string | null;
+    created_on: string;
+    updated_on: string;
+  };
 }
 
 interface LoginResponse {
@@ -74,22 +87,36 @@ export const testLogin = async ({ username }: { username: string }) => {
 export const sendOtp = async (
   data: SendOtpRequest
 ): Promise<ApiEnvelope<SendOtpResponse>> => {
-  const response = await apiClient.post<ApiEnvelope<SendOtpResponse>>(
-    "/api/v1/auth/send-otp",
-    data
-  );
-  return response.data;
+  try {
+    console.log('Sending OTP:', data);
+    const response = await apiClient.post<ApiEnvelope<SendOtpResponse>>(
+      "/auth/send-otp",
+      data
+    );
+    console.log('Send OTP response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Send OTP error:', error.response?.data || error);
+    throw error;
+  }
 };
 
 // Verify OTP for login
 export const verifyOtp = async (
   data: VerifyOtpRequest
-): Promise<ApiEnvelope<VerifyOtpResponse>> => {
-  const response = await apiClient.post<ApiEnvelope<VerifyOtpResponse>>(
-    "/api/v1/auth/verify-otp",
-    data
-  );
-  return response.data;
+): Promise<ApiEnvelope<OtpVerifyResponse>> => {
+  try {
+    console.log('Verifying OTP:', data);
+    const response = await apiClient.post<ApiEnvelope<OtpVerifyResponse>>(
+      "/auth/verify-otp",
+      data
+    );
+    console.log('OTP verification response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('OTP verification error:', error.response?.data || error);
+    throw error;
+  }
 };
 
 // Sign up new user
