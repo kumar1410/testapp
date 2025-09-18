@@ -25,7 +25,15 @@ app.use(
   })
 );
 
-app.get("/", (req, res) => res.send("OK"));
+app.get("/", (req, res) => {
+  res.json({
+    status: "Backend running",
+    version: process.env.npm_package_version || "1.0.0",
+    environment: process.env.NODE_ENV || "development",
+    time: new Date().toISOString(),
+    message: "Welcome to the Remainder Queen Backend API!"
+  });
+});
 
 // Routes
 const userRoutes = require("./routes/users.routes");
