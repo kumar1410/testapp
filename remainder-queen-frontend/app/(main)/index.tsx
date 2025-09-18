@@ -92,7 +92,7 @@ export default function HomeScreen() {
   const handleLogout = () => {
     logout();
     setVisible(false);
-    router.replace("/login"); // go back to login
+    router.replace("/(auth)/login");
   };
 
   if (loading) {

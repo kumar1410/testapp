@@ -14,7 +14,7 @@ const publicApi = process.env.EXPO_PUBLIC_API_URL;
 // if (!publicApi && process.env.NODE_ENV === "production") {
 //   url = "https://remainder-queen-backend.onrender.com";
 // }
-  let url = "https://testapp-4x8g.onrender.com/";
+  let url = "https://testapp-4x8g.onrender.com";
 
 
 const apiClient: AxiosInstance = axios.create({
