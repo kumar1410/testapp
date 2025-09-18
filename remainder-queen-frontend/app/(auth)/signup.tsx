@@ -27,7 +27,12 @@ export default function SignupScreen() {
           router.replace("/(auth)/login");
         }, 1500);
       } else {
-        const backendError = res.errorMessages && res.errorMessages.length > 0 ? res.errorMessages[0] : "Signup failed";
+        let backendError = "Signup failed";
+        if (res.errorMessages && res.errorMessages.length > 0) {
+          backendError = res.errorMessages[0];
+        } else if (res.result && typeof res.result === "object" && "message" in res.result) {
+          backendError = (res.result as any).message;
+        }
         setError(backendError);
       }
     } catch (err: any) {

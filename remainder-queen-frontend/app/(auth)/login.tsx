@@ -27,6 +27,7 @@ export default function LoginScreen() {
   const [otpSent, setOtpSent] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
+  const [adminUser, setAdminUser] = useState<"admin"|"test">("admin");
   const [backendStatus, setBackendStatus] = useState<{connected: boolean, status: string, message: string} | null>(null);
 
   useEffect(() => {
@@ -37,21 +38,23 @@ export default function LoginScreen() {
     return () => { mounted = false; };
   }, []);
   // Admin/Test direct login handler
-  const handleAdminLogin = async (username: "admin" | "test") => {
+  const handleAdminLogin = async () => {
     setAdminMode(true);
     try {
       setAdminLoading(true);
       setError("");
-      const response = await testLogin({ username });
+      const response = await testLogin({ username: adminUser });
       if (response && response.isSuccess) {
         await secureStore.setItemAsync("jwtToken", response.result.token);
         login(response.result.token);
         router.replace("/");
       } else {
         setError(response?.errorMessages?.[0] || "Admin login failed");
+        setAdminMode(false); // allow retry
       }
     } catch (err) {
       setError("Admin login failed");
+      setAdminMode(false); // allow retry
     } finally {
       setAdminLoading(false);
     }
@@ -73,6 +76,10 @@ export default function LoginScreen() {
           setLoading(false);
           setOtpSent(true); // Switch to OTP input
           console.log(result.result.message);
+        } else {
+          const backendError = result.errorMessages && result.errorMessages.length > 0 ? result.errorMessages[0] : (result.result?.message || "Failed to send OTP");
+          setError(backendError);
+          setLoading(false);
         }
       } else {
         // 🔹 Step 2: Verify OTP (replace with API later)
@@ -107,10 +114,9 @@ export default function LoginScreen() {
           }
           router.replace("/");
         } else {
-          // setError(response.message);
-          console.log("error");
+          const backendError = response?.errorMessages && response.errorMessages.length > 0 ? response.errorMessages[0] : (response?.result?.message || "OTP verification failed");
+          setError(backendError);
         }
-        setError("");
         console.log("Verifying OTP:", otp);
       }
     } catch (error) {
@@ -178,14 +184,34 @@ export default function LoginScreen() {
           )}
           {/* Only show admin login if not already in admin mode */}
           {!adminMode && (
-            <AppButton
-              style={styles.button}
-              status="secondary"
-              onPress={() => handleAdminLogin("admin")}
-              disabled={adminLoading}
-            >
-              {adminLoading ? "Logging in..." : "Admin/Test Login"}
-            </AppButton>
+            <View style={{marginTop: 8, alignItems: "center"}}>
+              <View style={{flexDirection: "row", marginBottom: 8}}>
+                <AppButton
+                  style={[styles.button, {marginRight: 8}]}
+                  status={adminUser === "admin" ? "primary" : "basic"}
+                  onPress={() => setAdminUser("admin")}
+                  disabled={adminLoading}
+                >
+                  Admin
+                </AppButton>
+                <AppButton
+                  style={styles.button}
+                  status={adminUser === "test" ? "primary" : "basic"}
+                  onPress={() => setAdminUser("test")}
+                  disabled={adminLoading}
+                >
+                  Test
+                </AppButton>
+              </View>
+              <AppButton
+                style={styles.button}
+                status="secondary"
+                onPress={handleAdminLogin}
+                disabled={adminLoading}
+              >
+                {adminLoading ? `Logging in as ${adminUser}...` : `Login as ${adminUser}`}
+              </AppButton>
+            </View>
           )}
         </>
       )}
