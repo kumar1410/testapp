@@ -5,17 +5,27 @@ exports.testLogin = async (req, res) => {
     if (!username) {
       return res.status(400).json(ApiResponse.error("Username is required", 400));
     }
-    // Validate test usernames
-    const validTestUsers = ["admin", "test", "demouser"];
-    if (!validTestUsers.includes(username)) {
-      return res.status(401).json(ApiResponse.error("Invalid test credentials. Use: admin, test, or demouser", 401));
+
+    // Get test user from database
+    const db = require("../config/dbConfig").getDB();
+    const [users] = await db.execute(
+      "SELECT * FROM test_users WHERE username = ?",
+      [username]
+    );
+
+    if (!users || users.length === 0) {
+      return res.status(401).json(
+        ApiResponse.error("Invalid test credentials. Use: admin, test, or demouser", 401)
+      );
     }
 
-    // Create user payload with role
+    const testUser = users[0];
     const userPayload = {
-      id: username === "admin" ? 0 : username === "test" ? 1 : 2,
-      username,
-      role: username === "admin" ? "admin" : "test"
+      id: testUser.id,
+      username: testUser.username,
+      role: testUser.role,
+      name: testUser.name,
+      phoneno: testUser.phoneno
     };
     const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: "7d" });
     return res.status(200).json(
