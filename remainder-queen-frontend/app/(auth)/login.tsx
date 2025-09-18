@@ -27,7 +27,7 @@ export default function LoginScreen() {
   const [otpSent, setOtpSent] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
-  const [adminUser, setAdminUser] = useState<"admin"|"test">("admin");
+  // Always use 'admin' for test login
   const [backendStatus, setBackendStatus] = useState<{connected: boolean, status: string, message: string} | null>(null);
 
   useEffect(() => {
@@ -40,20 +40,20 @@ export default function LoginScreen() {
   // Admin/Test direct login handler
   const handleAdminLogin = async () => {
     setAdminMode(true);
+    setAdminLoading(true);
+    setError("");
     try {
-      setAdminLoading(true);
-      setError("");
-      const response = await testLogin({ username: adminUser });
+      const response = await testLogin({ username: "admin" });
       if (response && response.isSuccess) {
         await secureStore.setItemAsync("jwtToken", response.result.token);
         login(response.result.token);
         router.replace("/");
       } else {
-        setError(response?.errorMessages?.[0] || "Admin login failed");
+        setError(response?.errorMessages?.[0] || "Test login failed");
         setAdminMode(false); // allow retry
       }
     } catch (err) {
-      setError("Admin login failed");
+      setError("Test login failed");
       setAdminMode(false); // allow retry
     } finally {
       setAdminLoading(false);
@@ -182,36 +182,16 @@ export default function LoginScreen() {
               {otpSent ? "Verify OTP" : "Login"}
             </AppButton>
           )}
-          {/* Only show admin login if not already in admin mode */}
+          {/* Only show test login if not already in admin mode */}
           {!adminMode && (
-            <View style={{marginTop: 8, alignItems: "center"}}>
-              <View style={{flexDirection: "row", marginBottom: 8}}>
-                <AppButton
-                  style={[styles.button, {marginRight: 8}]}
-                  status={adminUser === "admin" ? "primary" : "basic"}
-                  onPress={() => setAdminUser("admin")}
-                  disabled={adminLoading}
-                >
-                  Admin
-                </AppButton>
-                <AppButton
-                  style={styles.button}
-                  status={adminUser === "test" ? "primary" : "basic"}
-                  onPress={() => setAdminUser("test")}
-                  disabled={adminLoading}
-                >
-                  Test
-                </AppButton>
-              </View>
-              <AppButton
-                style={styles.button}
-                status="secondary"
-                onPress={handleAdminLogin}
-                disabled={adminLoading}
-              >
-                {adminLoading ? `Logging in as ${adminUser}...` : `Login as ${adminUser}`}
-              </AppButton>
-            </View>
+            <AppButton
+              style={styles.button}
+              status="secondary"
+              onPress={handleAdminLogin}
+              disabled={adminLoading}
+            >
+              {adminLoading ? "Logging in as test user..." : "Test Login (Skip OTP)"}
+            </AppButton>
           )}
         </>
       )}
