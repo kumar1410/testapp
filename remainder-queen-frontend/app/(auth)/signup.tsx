@@ -22,15 +22,20 @@ export default function SignupScreen() {
       const res = await signUp({ name, phoneno: phone });
       if (res.statusCode === 201 && res.isSuccess) {
         setError("");
-        setSuccess("Signup successful! Redirecting to login..."); // ✅ show success
+        setSuccess("Signup successful! Redirecting to login...");
         setTimeout(() => {
           router.replace("/(auth)/login");
         }, 1500);
       } else {
+        const backendError = res.errorMessages && res.errorMessages.length > 0 ? res.errorMessages[0] : "Signup failed";
+        setError(backendError);
+      }
+    } catch (err: any) {
+      if (err.response && err.response.data && err.response.data.errorMessages) {
+        setError(err.response.data.errorMessages[0]);
+      } else {
         setError("Signup failed");
       }
-    } catch {
-      setError("Signup failed");
     }
   };
 
