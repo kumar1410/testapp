@@ -26,8 +26,6 @@ export default function LoginScreen() {
   const [error, setError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
-  const [adminMode, setAdminMode] = useState(false);
-  // Always use 'admin' for test login
   const [backendStatus, setBackendStatus] = useState<{connected: boolean, status: string, message: string} | null>(null);
 
   useEffect(() => {
@@ -37,9 +35,8 @@ export default function LoginScreen() {
     });
     return () => { mounted = false; };
   }, []);
-  // Admin/Test direct login handler
+  // One-tap Test Login as 'admin'
   const handleAdminLogin = async () => {
-    setAdminMode(true);
     setAdminLoading(true);
     setError("");
     try {
@@ -50,11 +47,9 @@ export default function LoginScreen() {
         router.replace("/");
       } else {
         setError(response?.errorMessages?.[0] || "Test login failed");
-        setAdminMode(false); // allow retry
       }
     } catch (err) {
       setError("Test login failed");
-      setAdminMode(false); // allow retry
     } finally {
       setAdminLoading(false);
     }
@@ -114,7 +109,7 @@ export default function LoginScreen() {
           }
           router.replace("/");
         } else {
-          const backendError = response?.errorMessages && response.errorMessages.length > 0 ? response.errorMessages[0] : (response?.result?.message || "OTP verification failed");
+          const backendError = response?.result?.message || "OTP verification failed";
           setError(backendError);
         }
         console.log("Verifying OTP:", otp);
@@ -132,30 +127,15 @@ export default function LoginScreen() {
         Login
       </Text>
 
-      {/* Only show phone/OTP if NOT in admin mode */}
-      {!adminMode && !otpSent && (
-        <Input
-          label="Phone Number"
-          placeholder="Enter your phone number"
-          value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
-          style={styles.input}
-          maxLength={10}
-        />
-      )}
-
-      {!adminMode && otpSent && (
-        <Input
-          label="OTP"
-          placeholder="Enter OTP"
-          value={otp}
-          onChangeText={setOtp}
-          keyboardType="number-pad"
-          style={styles.input}
-          maxLength={6}
-        />
-      )}
+      {/* One-tap Test Login button */}
+      <AppButton
+        style={styles.button}
+        status="secondary"
+        onPress={handleAdminLogin}
+        disabled={adminLoading}
+      >
+        {adminLoading ? "Logging in as test user..." : "Test Login (Skip OTP)"}
+      </AppButton>
 
       {!!error && (
         <Text status="danger" style={styles.error}>
@@ -172,32 +152,18 @@ export default function LoginScreen() {
         />
       ) : (
         <>
-          {/* Only show normal login if not admin mode */}
-          {!adminMode && (
-            <AppButton
-              style={styles.button}
-              status="primary"
-              onPress={handleLoginOrVerify}
-            >
-              {otpSent ? "Verify OTP" : "Login"}
-            </AppButton>
-          )}
-          {/* Only show test login if not already in admin mode */}
-          {!adminMode && (
-            <AppButton
-              style={styles.button}
-              status="secondary"
-              onPress={handleAdminLogin}
-              disabled={adminLoading}
-            >
-              {adminLoading ? "Logging in as test user..." : "Test Login (Skip OTP)"}
-            </AppButton>
-          )}
+          <AppButton
+            style={styles.button}
+            status="primary"
+            onPress={handleLoginOrVerify}
+          >
+            {otpSent ? "Verify OTP" : "Login"}
+          </AppButton>
         </>
       )}
 
       {/* Only show signup link if not admin mode and not OTP */}
-      {!adminMode && !otpSent && (
+      {!otpSent && (
         <View style={styles.footer}>
           <Text appearance="hint">Don&apos;t have an account?</Text>
           <TouchableOpacity onPress={() => router.push("/signup")}>
