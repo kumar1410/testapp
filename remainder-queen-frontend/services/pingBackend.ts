@@ -11,6 +11,12 @@ export const pingBackend = async () => {
     }
     return { connected: false, status: "No status", message: "No message" };
   } catch (e) {
-    return { connected: false, status: "Not connected", message: e?.message || "Error" };
+    let msg = "Error";
+    if (e && typeof e === "object" && "message" in e) {
+      msg = (e as any).message;
+    } else if (typeof e === "string") {
+      msg = e;
+    }
+    return { connected: false, status: "Not connected", message: msg };
   }
 };
