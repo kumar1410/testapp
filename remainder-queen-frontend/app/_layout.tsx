@@ -40,29 +40,29 @@ export default function RootLayout() {
       try {
         const token = await SecureStore.getItemAsync("jwtToken");
         if (!cancelled) {
-          if (token) {
-            // If we have a token, decode it to check expiration
-            try {
-              const decoded: any = jwtDecode(token);
-              const currentTime = Date.now() / 1000;
-              if (decoded.exp && decoded.exp > currentTime) {
-                // Token is valid
-                setInitialRoute("/(main)");
-              } else {
-                // Token expired
-                await SecureStore.deleteItemAsync("jwtToken");
-                setInitialRoute("/(auth)/login");
-              }
-            } catch (err) {
-              // Invalid token
-              console.error("Invalid token:", err);
+        if (token) {
+          // If we have a token, decode it to check expiration
+          try {
+            const decoded: any = jwtDecode(token);
+            const currentTime = Date.now() / 1000;
+            if (decoded.exp && decoded.exp > currentTime) {
+              // Token is valid
+              setInitialRoute("/(main)");
+            } else {
+              // Token expired
               await SecureStore.deleteItemAsync("jwtToken");
-              setInitialRoute("/(auth)/login");
+              setInitialRoute("/(main)");
             }
-          } else {
-            // No token
-            setInitialRoute("/(auth)/login");
+          } catch (err) {
+            // Invalid token
+            console.error("Invalid token:", err);
+            await SecureStore.deleteItemAsync("jwtToken");
+            setInitialRoute("/(main)");
           }
+        } else {
+          // No token
+          setInitialRoute("/(main)");
+        }
           setReady(true);
         }
       } catch (error) {

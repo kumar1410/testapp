@@ -8,7 +8,7 @@ import axios, {
 import { router } from "expo-router";
 import * as secureStore from "expo-secure-store";
 
-const API_URL = "https://testapp-4x8g.onrender.com";
+const API_URL = "http://localhost:5000";
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: `${API_URL}/api/v1`,
@@ -39,6 +39,7 @@ apiClient.interceptors.request.use(
   async (
     config: AxiosRequestConfig
   ): Promise<AxiosRequestConfig> => {
+    console.log('Sending request:', config.url, config.method, config.data);
     const token = await secureStore.getItemAsync("jwtToken");
     if (token && config.headers) {
       (
