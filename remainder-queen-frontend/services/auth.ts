@@ -1,3 +1,8 @@
+// Direct login for admin/test user (no OTP)
+export const testLogin = async ({ username }: { username: string }) => {
+  const response = await apiClient.post("/auth/test-login", { username });
+  return response.data;
+};
 import apiClient from "../config/axiosConfig";
 
 interface SignUpRequest {

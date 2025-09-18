@@ -1,7 +1,7 @@
 import { AppButton } from "@/components/ui-kit/AppButton";
 import { useAuth } from "@/context/AuthContext";
 import { useTasks } from "@/context/TaskContext";
-import { sendOtp, verifyOtp } from "@/services/auth";
+import { sendOtp, verifyOtp, testLogin } from "@/services/auth";
 import { Input, Layout, Text } from "@ui-kitten/components";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
@@ -24,6 +24,26 @@ export default function LoginScreen() {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
+  // Admin/Test direct login handler
+  const handleAdminLogin = async (username: "admin" | "test") => {
+    try {
+      setAdminLoading(true);
+      setError("");
+      const response = await testLogin({ username });
+      if (response && response.isSuccess) {
+        await secureStore.setItemAsync("jwtToken", response.result.token);
+        login(response.result.token);
+        router.replace("/");
+      } else {
+        setError(response?.errorMessages?.[0] || "Admin login failed");
+      }
+    } catch (err) {
+      setError("Admin login failed");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
 
   const handleLoginOrVerify = async () => {
     try {
@@ -134,14 +154,25 @@ export default function LoginScreen() {
           style={{ marginTop: 12 }}
         />
       ) : (
-        <AppButton
-          style={styles.button}
-          status="primary"
-          onPress={handleLoginOrVerify}
-        >
-          {otpSent ? "Verify OTP" : "Login"}
-        </AppButton>
+        <>
+          <AppButton
+            style={styles.button}
+            status="primary"
+            onPress={handleLoginOrVerify}
+          >
+            {otpSent ? "Verify OTP" : "Login"}
+          </AppButton>
+          <AppButton
+            style={styles.button}
+            status="secondary"
+            onPress={() => handleAdminLogin("admin")}
+            disabled={adminLoading}
+          >
+            {adminLoading ? "Logging in..." : "Admin/Test Login"}
+          </AppButton>
+        </>
       )}
+// ...existing code...
       {/* <AppButton
         style={styles.button}
         status="primary"
