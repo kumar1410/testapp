@@ -2,9 +2,7 @@ import { AppButton } from "@/components/ui-kit/AppButton";
 import { useAuth } from "@/context/AuthContext";
 import { useTasks } from "@/context/TaskContext";
 import { sendOtp, verifyOtp, testLogin } from "@/services/auth";
-import { Input, Layout, Text, Card } from "@ui-kitten/components";
-import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
+import { Input, Layout, Text } from "@ui-kitten/components";
 import { registerPushToken } from "@/services/notifications";
 import { useRouter } from "expo-router";
 import * as secureStore from "expo-secure-store";
@@ -16,7 +14,6 @@ import {
   TouchableOpacity,
   View,
   Alert,
-  ScrollView,
 } from "react-native";
 
 export default function LoginScreen() {
@@ -29,14 +26,22 @@ export default function LoginScreen() {
   const [otpSent, setOtpSent] = useState(false);
   const [isTestLogin, setIsTestLogin] = useState(false);
   const [testUsername, setTestUsername] = useState("");
-  const [lastLoginResponse, setLastLoginResponse] = useState<any>(null);
-  const [backendStatus, setBackendStatus] = useState<{connected: boolean, status: string, message: string} | null>(null);
+  const [backendStatus, setBackendStatus] = useState<{connected: boolean, status: string, message: string, details?: any} | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    pingBackend().then((res) => {
-      if (mounted) setBackendStatus(res);
-    });
+    const checkBackend = async () => {
+      try {
+        const res = await pingBackend();
+        if (mounted) {
+          setBackendStatus(res);
+          console.log('Backend details:', res.details);
+        }
+      } catch (err) {
+        console.error('Backend check failed:', err);
+      }
+    };
+    checkBackend();
     return () => { mounted = false; };
   }, []);
 
@@ -44,26 +49,24 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       setError("");
-      setLastLoginResponse(null);
       
       if (!testUsername) {
-        setError("Please enter a test username");
+        setError("Please enter username");
         return;
       }
 
       const response = await testLogin({ username: testUsername });
       console.log('Test login response:', response);
-      setLastLoginResponse(response);
       
       if (response.isSuccess && response.result?.token) {
+        // Save the token
         await secureStore.setItemAsync("jwtToken", response.result.token);
+        // Update auth context
         login(response.result.token);
-        
-        Alert.alert(
-          "Login Successful",
-          `Welcome ${response.result.user.name || response.result.user.username}!\nRole: ${response.result.user.role}`,
-          [{ text: "Continue", onPress: () => router.replace("/(main)") }]
-        );
+        // Get push token for notifications
+        await registerPushToken();
+        // Navigate to main app
+        router.replace("/(main)");
       } else {
         setError(response.errorMessages?.[0] || "Login failed");
       }
@@ -79,39 +82,41 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       if (!otpSent) {
+        // Send OTP
         if (phone.length < 10) {
           setError("Enter a valid phone number");
           return;
         }
         setError("");
-        console.log('Attempting to send OTP to:', phone);
+        console.log('Sending OTP to:', phone);
         const result = await sendOtp({ phoneNo: phone });
         console.log("OTP send response:", result);
 
         if (result.isSuccess) {
           setOtpSent(true);
-          Alert.alert("OTP Sent", "Please check your phone for the OTP code.");
+          Alert.alert("OTP Sent", "Please check your phone for the verification code.");
         } else {
           setError(result.errorMessages?.[0] || "Failed to send OTP");
         }
       } else {
+        // Verify OTP
         if (!otp) {
           setError("Please enter the OTP");
           return;
         }
-        console.log('Attempting to verify OTP:', { phoneNo: phone, otp });
+        console.log('Verifying OTP:', { phoneNo: phone, otp });
         const response = await verifyOtp({ phoneNo: phone, otp });
-        setLastLoginResponse(response);
-        console.log("Verify response:", response);
+        console.log("OTP verification response:", response);
 
         if (response.isSuccess && response.result?.token) {
+          // Save the token
           await secureStore.setItemAsync("jwtToken", response.result.token);
+          // Update auth context
           login(response.result.token);
-          Alert.alert(
-            "Login Successful",
-            "Welcome back!",
-            [{ text: "Continue", onPress: () => router.replace("/(main)") }]
-          );
+          // Get push token for notifications
+          await registerPushToken();
+          // Navigate to main app
+          router.replace("/(main)");
         } else {
           setError(response.errorMessages?.[0] || "Invalid OTP");
         }
@@ -126,162 +131,115 @@ export default function LoginScreen() {
 
   return (
     <Layout style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <Text category="h1" style={styles.title}>
-            Login
-          </Text>
+      <View style={styles.content}>
+        <Text category="h1" style={styles.title}>
+          Login
+        </Text>
 
-          {backendStatus && (
-            <View style={[styles.statusBanner, 
-              {backgroundColor: backendStatus.connected ? '#4CAF50' : '#f44336'}]}>
-              <Text style={styles.statusText}>
-                {backendStatus.message}
-              </Text>
-            </View>
-          )}
-
-          {error ? (
-            <Text status="danger" style={styles.error}>
-              {error}
+        {/* Backend Status Banner */}
+        {backendStatus && (
+          <View style={[styles.statusBanner, 
+            {backgroundColor: backendStatus.connected ? '#4CAF50' : '#f44336'}]}>
+            <Text style={styles.statusText}>
+              {backendStatus.message}
             </Text>
-          ) : null}
-
-          <View style={styles.loginTypeSwitcher}>
-            <TouchableOpacity 
-              style={[styles.switchButton, !isTestLogin && styles.activeSwitchButton]} 
-              onPress={() => {
-                setIsTestLogin(false);
-                setError("");
-                setLastLoginResponse(null);
-              }}>
-              <Text style={[styles.switchButtonText, !isTestLogin && styles.activeSwitchButtonText]}>
-                Phone Login
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.switchButton, isTestLogin && styles.activeSwitchButton]} 
-              onPress={() => {
-                setIsTestLogin(true);
-                setError("");
-                setOtpSent(false);
-                setLastLoginResponse(null);
-              }}>
-              <Text style={[styles.switchButtonText, isTestLogin && styles.activeSwitchButtonText]}>
-                Test Login
-              </Text>
-            </TouchableOpacity>
           </View>
+        )}
 
-          {isTestLogin ? (
-            <>
-              <Card style={styles.testCredentialsCard}>
-                <Text category="h6" style={styles.credentialsTitle}>Available Test Users:</Text>
-                <View style={styles.credentialsList}>
-                  <View style={styles.credentialItem}>
-                    <Text style={styles.credentialUsername}>admin</Text>
-                    <Text style={styles.credentialDesc}>Full system access</Text>
-                  </View>
-                  <View style={styles.credentialItem}>
-                    <Text style={styles.credentialUsername}>test</Text>
-                    <Text style={styles.credentialDesc}>Limited test access</Text>
-                  </View>
-                  <View style={styles.credentialItem}>
-                    <Text style={styles.credentialUsername}>demouser</Text>
-                    <Text style={styles.credentialDesc}>Demo access only</Text>
-                  </View>
-                </View>
-              </Card>
-              
-              <Input
-                style={styles.input}
-                placeholder="Enter test username"
-                value={testUsername}
-                onChangeText={(text) => {
-                  setError("");
-                  setTestUsername(text);
-                  setLastLoginResponse(null);
-                }}
-              />
-              
-              <AppButton
-                onPress={handleTestLogin}
-                style={styles.button}
-                disabled={loading}
-              >
-                {loading ? <ActivityIndicator color="#fff" /> : "Login as Test User"}
-              </AppButton>
+        {error ? (
+          <Text status="danger" style={styles.error}>
+            {error}
+          </Text>
+        ) : null}
 
-              {lastLoginResponse && (
-                <Card style={styles.responseCard}>
-                  <Text category="h6" style={styles.responseTitle}>Login Response:</Text>
-                  <Text style={styles.responseText}>
-                    Status: {lastLoginResponse.isSuccess ? "Success" : "Failed"}
-                  </Text>
-                  {lastLoginResponse.isSuccess && lastLoginResponse.result?.user && (
-                    <>
-                      <Text style={styles.responseText}>User: {lastLoginResponse.result.user.username}</Text>
-                      <Text style={styles.responseText}>Role: {lastLoginResponse.result.user.role}</Text>
-                      <Text style={styles.responseText}>Name: {lastLoginResponse.result.user.name}</Text>
-                    </>
-                  )}
-                </Card>
-              )}
-            </>
-          ) : (
-            <>
-              <Input
-                style={styles.input}
-                placeholder="Phone Number"
-                value={phone}
-                onChangeText={(text) => {
-                  setError("");
-                  setPhone(text);
-                }}
-                keyboardType="phone-pad"
-              />
-              {otpSent && (
-                <Input
-                  style={styles.input}
-                  placeholder="Enter OTP"
-                  value={otp}
-                  onChangeText={(text) => {
-                    setError("");
-                    setOtp(text);
-                  }}
-                  keyboardType="number-pad"
-                />
-              )}
-              <AppButton
-                onPress={handleLoginOrVerify}
-                style={styles.button}
-                disabled={loading}
-              >
-                {loading ? <ActivityIndicator color="#fff" /> : otpSent ? "Verify OTP" : "Send OTP"}
-              </AppButton>
-
-              {lastLoginResponse && (
-                <Card style={styles.responseCard}>
-                  <Text category="h6" style={styles.responseTitle}>Login Response:</Text>
-                  <Text style={styles.responseText}>
-                    Status: {lastLoginResponse.isSuccess ? "Success" : "Failed"}
-                  </Text>
-                  {lastLoginResponse.errorMessages?.map((msg: string, i: number) => (
-                    <Text key={i} style={styles.responseError}>{msg}</Text>
-                  ))}
-                </Card>
-              )}
-            </>
-          )}
-
-          <TouchableOpacity
-            style={styles.signupLink}
-            onPress={() => router.push("/signup")}
-          >
-            <Text style={styles.signupText}>Don't have an account? Sign up</Text>
+        {/* Login Type Switcher */}
+        <View style={styles.loginTypeSwitcher}>
+          <TouchableOpacity 
+            style={[styles.switchButton, !isTestLogin && styles.activeSwitchButton]} 
+            onPress={() => {
+              setIsTestLogin(false);
+              setError("");
+            }}>
+            <Text style={[styles.switchButtonText, !isTestLogin && styles.activeSwitchButtonText]}>
+              Phone Login
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.switchButton, isTestLogin && styles.activeSwitchButton]} 
+            onPress={() => {
+              setIsTestLogin(true);
+              setError("");
+              setOtpSent(false);
+            }}>
+            <Text style={[styles.switchButtonText, isTestLogin && styles.activeSwitchButtonText]}>
+              Test Login
+            </Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+
+        {/* Login Form */}
+        {isTestLogin ? (
+          <Input
+            style={styles.input}
+            placeholder="Username"
+            value={testUsername}
+            onChangeText={(text) => {
+              setError("");
+              setTestUsername(text);
+            }}
+          />
+        ) : (
+          <>
+            <Input
+              style={styles.input}
+              placeholder="Phone Number"
+              value={phone}
+              onChangeText={(text) => {
+                setError("");
+                setPhone(text);
+              }}
+              keyboardType="phone-pad"
+            />
+            {otpSent && (
+              <Input
+                style={styles.input}
+                placeholder="Enter OTP"
+                value={otp}
+                onChangeText={(text) => {
+                  setError("");
+                  setOtp(text);
+                }}
+                keyboardType="number-pad"
+              />
+            )}
+          </>
+        )}
+
+        {/* Action Button */}
+        <AppButton
+          onPress={isTestLogin ? handleTestLogin : handleLoginOrVerify}
+          style={styles.button}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : isTestLogin ? (
+            "Login"
+          ) : otpSent ? (
+            "Verify OTP"
+          ) : (
+            "Send OTP"
+          )}
+        </AppButton>
+
+        {/* Signup Link */}
+        <TouchableOpacity
+          style={styles.signupLink}
+          onPress={() => router.push("/signup")}
+        >
+          <Text style={styles.signupText}>Don't have an account? Sign up</Text>
+        </TouchableOpacity>
+      </View>
     </Layout>
   );
 }
@@ -289,9 +247,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
   },
   content: {
     flex: 1,
@@ -318,7 +273,6 @@ const styles = StyleSheet.create({
   },
   signupLink: {
     marginTop: 20,
-    marginBottom: 20,
   },
   signupText: {
     color: "#2196F3",
@@ -356,48 +310,5 @@ const styles = StyleSheet.create({
   },
   activeSwitchButtonText: {
     color: "#ffffff",
-  },
-  testCredentialsCard: {
-    width: "100%",
-    marginBottom: 15,
-    backgroundColor: "#f5f5f5",
-  },
-  credentialsTitle: {
-    marginBottom: 10,
-    color: "#1976D2",
-  },
-  credentialsList: {
-    gap: 8,
-  },
-  credentialItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 4,
-  },
-  credentialUsername: {
-    fontWeight: "bold",
-    color: "#2196F3",
-  },
-  credentialDesc: {
-    color: "#757575",
-    fontSize: 12,
-  },
-  responseCard: {
-    width: "100%",
-    marginTop: 15,
-    backgroundColor: "#f5f5f5",
-  },
-  responseTitle: {
-    marginBottom: 8,
-    color: "#1976D2",
-  },
-  responseText: {
-    marginBottom: 4,
-    color: "#424242",
-  },
-  responseError: {
-    color: "#f44336",
-    marginTop: 4,
   },
 });

@@ -6,17 +6,26 @@ let url = publicApi || "https://testapp-4x8g.onrender.com";
 export const pingBackend = async () => {
   try {
     const res = await axios.get(url + "/");
-    if (res.status === 200 && res.data && res.data.status) {
-      return { connected: true, status: res.data.status, message: res.data.message };
+    if (res.status === 200) {
+      return {
+        connected: true,
+        status: "Connected to Backend",
+        message: "Backend service running on Render",
+        details: res.data
+      };
     }
-    return { connected: false, status: "No status", message: "No message" };
+    return {
+      connected: false,
+      status: "Not Connected",
+      message: "Cannot reach backend service on Render",
+      details: null
+    };
   } catch (e) {
-    let msg = "Error";
-    if (e && typeof e === "object" && "message" in e) {
-      msg = (e as any).message;
-    } else if (typeof e === "string") {
-      msg = e;
-    }
-    return { connected: false, status: "Not connected", message: msg };
+    return {
+      connected: false,
+      status: "Connection Failed",
+      message: "Backend service unavailable on Render",
+      details: null
+    };
   }
 };
