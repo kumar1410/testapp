@@ -68,7 +68,7 @@ export default function TestLoginScreen() {
         disabled={loading || !username}
       >
         {loading ? "Logging in..." : "Test Login"}
-      </AppButton}
+      </AppButton>
 
       <View style={styles.footer}>
         <Text appearance="hint">Want to use phone number?</Text>
