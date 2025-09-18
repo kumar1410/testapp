@@ -8,7 +8,17 @@ import * as Device from "expo-device";
 import { registerPushToken } from "@/services/notifications";
 import { useRouter } from "expo-router";
 import * as secureStore from "expo-secure-store";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { pingBackend } from "@/services/pingBackend";
+  const [backendStatus, setBackendStatus] = useState<{connected: boolean, status: string, message: string} | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    pingBackend().then((res) => {
+      if (mounted) setBackendStatus(res);
+    });
+    return () => { mounted = false; };
+  }, []);
 import {
   ActivityIndicator,
   StyleSheet,
@@ -189,6 +199,22 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
       )}
+      {/* Backend status at bottom */}
+      <View style={{ alignItems: "center", marginTop: 24 }}>
+        <Text
+          style={{
+            color: backendStatus?.connected ? "green" : "red",
+            fontSize: 13,
+            marginTop: 8,
+          }}
+        >
+          {backendStatus
+            ? backendStatus.connected
+              ? `Connected to Render backend: ${backendStatus.status}`
+              : `Not connected to backend: ${backendStatus.status}`
+            : "Checking backend connection..."}
+        </Text>
+      </View>
     </Layout>
   );
 }
