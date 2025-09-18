@@ -5,12 +5,18 @@ exports.testLogin = async (req, res) => {
     if (!username) {
       return res.status(400).json(ApiResponse.error("Username is required", 400));
     }
-    // You can change this logic to check for a specific admin/test username
-    if (username !== "admin" && username !== "test") {
-      return res.status(401).json(ApiResponse.error("Unauthorized", 401));
+    // Validate test usernames
+    const validTestUsers = ["admin", "test", "demouser"];
+    if (!validTestUsers.includes(username)) {
+      return res.status(401).json(ApiResponse.error("Invalid test credentials. Use: admin, test, or demouser", 401));
     }
-    // Simulate a user object for admin/test
-    const userPayload = { id: 0, username };
+
+    // Create user payload with role
+    const userPayload = {
+      id: username === "admin" ? 0 : username === "test" ? 1 : 2,
+      username,
+      role: username === "admin" ? "admin" : "test"
+    };
     const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: "7d" });
     return res.status(200).json(
       ApiResponse.success(

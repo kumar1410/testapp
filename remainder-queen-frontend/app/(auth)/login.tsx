@@ -1,7 +1,7 @@
 import { AppButton } from "@/components/ui-kit/AppButton";
 import { useAuth } from "@/context/AuthContext";
 import { useTasks } from "@/context/TaskContext";
-import { sendOtp, verifyOtp, testLogin } from "@/services/auth";
+import { sendOtp, verifyOtp } from "@/services/auth";
 import { Input, Layout, Text } from "@ui-kitten/components";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
@@ -25,7 +25,6 @@ export default function LoginScreen() {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(false);
   const [backendStatus, setBackendStatus] = useState<{connected: boolean, status: string, message: string} | null>(null);
 
   useEffect(() => {
@@ -35,25 +34,6 @@ export default function LoginScreen() {
     });
     return () => { mounted = false; };
   }, []);
-  // One-tap Test Login as 'admin'
-  const handleAdminLogin = async () => {
-    setAdminLoading(true);
-    setError("");
-    try {
-      const response = await testLogin({ username: "admin" });
-      if (response && response.isSuccess) {
-        await secureStore.setItemAsync("jwtToken", response.result.token);
-        login(response.result.token);
-        router.replace("/");
-      } else {
-        setError(response?.errorMessages?.[0] || "Test login failed");
-      }
-    } catch (err) {
-      setError("Test login failed");
-    } finally {
-      setAdminLoading(false);
-    }
-  };
 
   const handleLoginOrVerify = async () => {
     try {
@@ -127,23 +107,42 @@ export default function LoginScreen() {
         Login
       </Text>
 
-      {/* One-tap Test Login button */}
-      <AppButton
-        style={styles.button}
-        status="secondary"
-        onPress={handleAdminLogin}
-        disabled={adminLoading}
-      >
-        {adminLoading ? "Logging in as test user..." : "Test Login (Skip OTP)"}
-      </AppButton>
 
-      {!!error && (
+      {/* Phone number input */}
+      <Input
+        label="Phone Number"
+        placeholder="Enter your phone number"
+        value={phone}
+        onChangeText={setPhone}
+        style={styles.input}
+        keyboardType="phone-pad"
+        maxLength={15}
+        autoCapitalize="none"
+        editable={!loading && !otpSent}
+      />
+
+      {/* OTP input, only show after OTP is sent */}
+      {otpSent && (
+        <Input
+          label="OTP"
+          placeholder="Enter OTP"
+          value={otp}
+          onChangeText={setOtp}
+          style={styles.input}
+          keyboardType="number-pad"
+          maxLength={8}
+          autoCapitalize="none"
+          editable={!loading}
+        />
+      )}
+
+            {!!error && (
         <Text status="danger" style={styles.error}>
           {error}
         </Text>
       )}
 
-      {/* Button changes dynamically */}
+      {/* Main buttons */}
       {loading ? (
         <ActivityIndicator
           size="large"
@@ -152,12 +151,22 @@ export default function LoginScreen() {
         />
       ) : (
         <>
+          {/* OTP Flow Button */}
           <AppButton
             style={styles.button}
             status="primary"
             onPress={handleLoginOrVerify}
           >
-            {otpSent ? "Verify OTP" : "Login"}
+            {otpSent ? "Verify OTP" : "Send OTP"}
+          </AppButton>
+
+          {/* Test Login Navigation */}
+          <AppButton
+            style={[styles.button, styles.secondaryButton]}
+            status="basic"
+            onPress={() => router.push("/test-login")}
+          >
+            Test Login (Skip OTP)
           </AppButton>
         </>
       )}
@@ -208,8 +217,12 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 12,
   },
+  secondaryButton: {
+    marginTop: 8,
+  },
   error: {
     marginBottom: 8,
+    textAlign: "center",
   },
   footer: {
     flexDirection: "row",
@@ -222,5 +235,9 @@ const styles = StyleSheet.create({
     color: "#3D5AFE",
     marginLeft: 4,
     fontWeight: "bold",
+  },
+  statusContainer: {
+    alignItems: "center",
+    marginTop: 24,
   },
 });
