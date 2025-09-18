@@ -1,4 +1,4 @@
-import * as secureStore from 'expo-secure-store';
+import secureStore from '@/utils/secureStore';
 import { jwtDecode } from "jwt-decode";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
