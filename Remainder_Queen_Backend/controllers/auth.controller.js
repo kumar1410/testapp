@@ -1,5 +1,11 @@
 const jwt = require("jsonwebtoken");
+const Users = require("../models/users.model");
+const ApiResponse = require("../utils/apiResponse");
+const { default: axios } = require("axios");
+const speakeasy = require("speakeasy");
+
 const JWT_SECRET = process.env.JWT_SECRET;
+const OTP_SECRET = process.env.OTP_SECRET;
 
 // Direct login for test/admin user (no OTP)
 exports.testLogin = async (req, res) => {
@@ -50,14 +56,6 @@ exports.testLogin = async (req, res) => {
     ));
   }
 };
-const speakeasy = require("speakeasy");
-const jwt = require("jsonwebtoken");
-const Users = require("../models/users.model");
-const ApiResponse = require("../utils/apiResponse"); // ✅ import the template class
-const { default: axios } = require("axios");
-
-const JWT_SECRET = process.env.JWT_SECRET;
-const OTP_SECRET = process.env.OTP_SECRET;
 
 exports.sendOtp = async (req, res) => {
   try {
