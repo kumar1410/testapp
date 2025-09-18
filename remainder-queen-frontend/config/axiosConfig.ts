@@ -10,10 +10,8 @@ import * as secureStore from "expo-secure-store";
 
 // Prefer EXPO public env for easy configuration in CI/Render
 const publicApi = process.env.EXPO_PUBLIC_API_URL;
-let url = publicApi || "http://localhost:5000"; // Default to local dev
-if (!publicApi && process.env.NODE_ENV === "production") {
-  url = "https://testapp-4x8g.onrender.com";
-}
+// Always use Render URL for now
+const url = "https://testapp-4x8g.onrender.com";
 
 
 const apiClient: AxiosInstance = axios.create({

@@ -22,16 +22,22 @@ export default function TestLoginScreen() {
     setLoading(true);
     setError("");
     try {
+      console.log('Starting test login with username:', username);
       const response = await testLogin({ username });
-      if (response && response.isSuccess) {
+      console.log('Test login response:', response);
+      
+      if (response && response.isSuccess && response.result?.token) {
+        console.log('Login successful, saving token');
         await secureStore.setItemAsync("jwtToken", response.result.token);
         login(response.result.token);
         router.replace("/");
       } else {
-        setError(response?.errorMessages?.[0] || "Invalid test credentials");
+        console.error('Login response format error:', response);
+        setError(response?.errorMessages?.[0] || response?.result?.message || "Invalid test credentials");
       }
-    } catch (err) {
-      setError("Login failed. Please try again.");
+    } catch (err: any) {
+      console.error('Login error:', err.response?.data || err.message);
+      setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }

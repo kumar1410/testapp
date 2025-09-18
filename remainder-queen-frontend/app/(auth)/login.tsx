@@ -45,14 +45,17 @@ export default function LoginScreen() {
           return;
         }
         setError("");
+        console.log('Attempting to send OTP to:', phone);
         const result = await sendOtp({ phoneNo: phone });
-        console.log("body", result);
-        if (result.isSuccess) {
+        console.log("OTP send response:", result);
+        
+        if (result && result.isSuccess) {
+          console.log('OTP sent successfully');
           setLoading(false);
           setOtpSent(true); // Switch to OTP input
-          console.log(result.result.message);
         } else {
-          const backendError = result.errorMessages && result.errorMessages.length > 0 ? result.errorMessages[0] : (result.result?.message || "Failed to send OTP");
+          console.error('OTP send error:', result);
+          const backendError = result?.errorMessages?.[0] || result?.result?.message || "Failed to send OTP";
           setError(backendError);
           setLoading(false);
         }

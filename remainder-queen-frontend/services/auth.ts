@@ -43,8 +43,15 @@ interface VerifyOtpResponse {
 
 // Direct login for admin/test user (no OTP)
 export const testLogin = async ({ username }: { username: string }) => {
-  const response = await apiClient.post("/api/v1/auth/test-login", { username });
-  return response.data;
+  try {
+    console.log('Attempting test login with:', username);
+    const response = await apiClient.post("/api/v1/auth/test-login", { username });
+    console.log('Test login response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Test login error:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 // Send OTP for phone number verification
