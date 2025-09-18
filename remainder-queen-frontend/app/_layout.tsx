@@ -10,6 +10,7 @@ import { EvaIconsPack } from "@ui-kitten/eva-icons";
 import { useFonts } from "expo-font";
 import { Redirect, Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+// import { testLogin } from "@/services/auth";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
@@ -50,9 +51,7 @@ export default function RootLayout() {
       }
     };
 
-    checkToken(); // Call the async function
-
-    // Return cleanup function directly (not from async function)
+    checkToken();
     return () => {
       cancelled = true;
     };
