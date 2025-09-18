@@ -8,19 +8,32 @@ import axios, {
 import { router } from "expo-router";
 import * as secureStore from "expo-secure-store";
 
-// Prefer EXPO public env for easy configuration in CI/Render
-const publicApi = process.env.EXPO_PUBLIC_API_URL;
-// Always use Render URL for now
-const url = "https://testapp-4x8g.onrender.com";
-
+// Base URL for the backend API
+const API_URL = "https://testapp-4x8g.onrender.com";
 
 const apiClient: AxiosInstance = axios.create({
-  baseURL: `${url}/api/v1`,
-  // timeout: 10000,
+  baseURL: `${API_URL}/api/v1`,
+  timeout: 30000, // 30 seconds timeout
   headers: {
     "Content-Type": "application/json",
+    "Accept": "application/json",
   },
 });
+
+// Error handling interceptor
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    return Promise.reject(error);
+  }
+);
 
 // Request interceptor
 apiClient.interceptors.request.use(
