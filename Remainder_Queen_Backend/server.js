@@ -31,7 +31,8 @@ app.get("/", (req, res) => {
     version: process.env.npm_package_version || "1.0.0",
     environment: process.env.NODE_ENV || "development",
     time: new Date().toISOString(),
-    message: "Welcome to the Remainder Queen Backend API!"
+    message: "Welcome to the Remainder Queen Backend API!",
+    database: process.env.DB_NAME || "not set"
   });
 });
 
