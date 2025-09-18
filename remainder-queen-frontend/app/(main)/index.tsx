@@ -1,6 +1,5 @@
 import { AppButton } from "@/components/ui-kit/AppButton";
 import { AppIcon } from "@/components/ui-kit/AppIcon";
-// import { tasks } from "@/components/ui-kit/DummyData";
 import { TabSwitcher } from "@/components/ui-kit/TabSwitcher";
 import { TaskCard } from "@/components/ui-kit/TaskCard";
 import { Colors } from "@/constants/Colors";
@@ -8,20 +7,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useTasks } from "@/context/TaskContext";
 import { Input, Layout, Text } from "@ui-kitten/components";
 import { sendTestNotification } from "@/services/testNotification";
-  const [notifStatus, setNotifStatus] = useState<string>("");
-  const handleTestNotification = async () => {
-    setNotifStatus("Sending...");
-    try {
-      const res = await sendTestNotification();
-      if (res && res.isSuccess) {
-        setNotifStatus("Test notification sent!");
-      } else {
-        setNotifStatus(res?.message || "Failed to send notification");
-      }
-    } catch (e: any) {
-      setNotifStatus(e?.message || "Error sending notification");
-    }
-  };
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -42,6 +27,21 @@ export default function HomeScreen() {
   const [isFocused, setIsFocused] = useState(false);
   const [visible, setVisible] = useState(false);
   const { tasks, loading, error, fetchTasks } = useTasks();
+  const [notifStatus, setNotifStatus] = useState<string>("");
+
+  const handleTestNotification = async () => {
+    setNotifStatus("Sending...");
+    try {
+      const res = await sendTestNotification();
+      if (res && res.isSuccess) {
+        setNotifStatus("Test notification sent!");
+      } else {
+        setNotifStatus(res?.message || "Failed to send notification");
+      }
+    } catch (e: any) {
+      setNotifStatus(e?.message || "Error sending notification");
+    }
+  };
 
   // const [tasks, setTasks] = useState<Task[]>([]);
   // const [loading, setLoading] = useState<boolean>(false);
@@ -254,6 +254,38 @@ export default function HomeScreen() {
         >
           {""}
         </AppButton>
+
+        <AppButton
+          style={[
+            styles.fab,
+            {
+              bottom: 100,
+              backgroundColor: '#2196F3', // Info blue color
+            }
+          ]}
+          status="info"
+          accessoryLeft={<AppIcon name="bell" pack="eva" color="white" />}
+          onPress={handleTestNotification}
+        >
+          {""}
+        </AppButton>
+        {notifStatus ? (
+          <Text style={{
+            position: 'absolute',
+            bottom: 80,
+            left: 16,
+            right: 16,
+            textAlign: 'center',
+            color: '#666',
+            fontSize: 12,
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            padding: 4,
+            borderRadius: 4,
+            elevation: 2
+          }}>
+            {notifStatus}
+          </Text>
+        ) : null}
       </View>
     </Layout>
   );

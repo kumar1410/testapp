@@ -33,4 +33,37 @@ exports.unregister = async (req, res) => {
   }
 };
 
+exports.test = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json(ApiResponse.error("Unauthorized", 401));
+    }
 
+    const notificationService = require("../services/notification.service");
+    const result = await notificationService.sendToUserIds([userId], {
+      notification: {
+        title: "Test Notification",
+        body: "This is a test notification sent from the app!",
+      },
+      data: {
+        type: "test",
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    return res.json(
+      ApiResponse.success(
+        { 
+          successCount: result.successCount,
+          failureCount: result.failureCount,
+        },
+        1,
+        200
+      )
+    );
+  } catch (e) {
+    console.error("Test notification error:", e);
+    return res.status(500).json(ApiResponse.error(e.message, 500));
+  }
+};

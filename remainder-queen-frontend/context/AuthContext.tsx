@@ -3,9 +3,13 @@ import { jwtDecode } from "jwt-decode";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface User {
-  phoneNo: string;
-  id?: number;
+  id: number;
+  phoneno?: string;
+  phoneNo?: string;
   name?: string;
+  role?: string;
+  username?: string;
+  type?: string | null;
 }
 
 interface AuthContextType {
@@ -13,6 +17,7 @@ interface AuthContextType {
   setUser: (user: User | null) => void;
   logout: () => void;
   login: (token: string) => void;
+  isAuthenticated: boolean;
 }
 
 
@@ -23,31 +28,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
-      //   const token = await SecureStore.getItemAsync("token");
-      const token = await secureStore.getItemAsync("jwtToken");
-      if (token) {
-        try {
+      try {
+        const token = await secureStore.getItemAsync("jwtToken");
+        if (token) {
           const decoded: any = jwtDecode(token);
+          console.log('Decoded token:', decoded);
           setUser({
-            phoneNo: decoded.phoneNo,
             id: decoded.id,
+            phoneno: decoded.phoneno || decoded.phoneNo,
             name: decoded.name,
+            role: decoded.role,
+            username: decoded.username,
+            type: decoded.type
           });
-        } catch (err) {
-          console.log("Invalid token", err);
+          setIsAuthenticated(true);
         }
+      } catch (err) {
+        console.error("Error loading user:", err);
+        await secureStore.deleteItemAsync("jwtToken");
+        setUser(null);
+        setIsAuthenticated(false);
       }
     };
     loadUser();
   }, []);
 
-  const login = (token: string) => {
-    secureStore.setItemAsync("jwtToken", token);
+  const login = async (token: string) => {
+    await secureStore.setItemAsync("jwtToken", token);
     try {
       const decoded: any = jwtDecode(token);
+      console.log('Login decoded token:', decoded);
       setUser({
         phoneNo: decoded.phoneNo,
         id: decoded.id,
@@ -63,8 +77,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(null);
   };
 
+  const login = async (token: string) => {
+    await secureStore.setItemAsync("jwtToken", token);
+    try {
+      const decoded: any = jwtDecode(token);
+      console.log('Login decoded token:', decoded);
+      setUser({
+        id: decoded.id,
+        phoneno: decoded.phoneno || decoded.phoneNo,
+        name: decoded.name,
+        role: decoded.role,
+        username: decoded.username,
+        type: decoded.type
+      });
+      setIsAuthenticated(true);
+    } catch (err) {
+      console.error("Login error:", err);
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
+
+  const logout = async () => {
+    await secureStore.deleteItemAsync("jwtToken");
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, setUser, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, login, logout, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

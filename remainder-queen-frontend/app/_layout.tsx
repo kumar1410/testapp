@@ -10,6 +10,7 @@ import { EvaIconsPack } from "@ui-kitten/eva-icons";
 import { useFonts } from "expo-font";
 import { Redirect, Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { jwtDecode } from "jwt-decode";
 // import { testLogin } from "@/services/auth";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
@@ -30,28 +31,50 @@ export default function RootLayout() {
   });
 
   const [ready, setReady] = React.useState(false);
-  const [hasToken, setHasToken] = React.useState<boolean | null>(null);
+  const [initialRoute, setInitialRoute] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
 
-    const checkToken = async () => {
+    const initializeApp = async () => {
       try {
         const token = await SecureStore.getItemAsync("jwtToken");
         if (!cancelled) {
-          setHasToken(!!token);
+          if (token) {
+            // If we have a token, decode it to check expiration
+            try {
+              const decoded: any = jwtDecode(token);
+              const currentTime = Date.now() / 1000;
+              if (decoded.exp && decoded.exp > currentTime) {
+                // Token is valid
+                setInitialRoute("/(main)");
+              } else {
+                // Token expired
+                await SecureStore.deleteItemAsync("jwtToken");
+                setInitialRoute("/(auth)/login");
+              }
+            } catch (err) {
+              // Invalid token
+              console.error("Invalid token:", err);
+              await SecureStore.deleteItemAsync("jwtToken");
+              setInitialRoute("/(auth)/login");
+            }
+          } else {
+            // No token
+            setInitialRoute("/(auth)/login");
+          }
           setReady(true);
         }
       } catch (error) {
-        console.error("Error getting token:", error);
+        console.error("Error initializing app:", error);
         if (!cancelled) {
-          setHasToken(false);
+          setInitialRoute("/(auth)/login");
           setReady(true);
         }
       }
     };
 
-    checkToken();
+    initializeApp();
     return () => {
       cancelled = true;
     };
