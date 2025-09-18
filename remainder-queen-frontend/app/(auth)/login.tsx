@@ -25,8 +25,10 @@ export default function LoginScreen() {
   const [error, setError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [adminMode, setAdminMode] = useState(false);
   // Admin/Test direct login handler
   const handleAdminLogin = async (username: "admin" | "test") => {
+    setAdminMode(true);
     try {
       setAdminLoading(true);
       setError("");
@@ -114,8 +116,8 @@ export default function LoginScreen() {
         Login
       </Text>
 
-      {/* Phone Input */}
-      {!otpSent && (
+      {/* Only show phone/OTP if NOT in admin mode */}
+      {!adminMode && !otpSent && (
         <Input
           label="Phone Number"
           placeholder="Enter your phone number"
@@ -127,8 +129,7 @@ export default function LoginScreen() {
         />
       )}
 
-      {/* OTP Input */}
-      {otpSent && (
+      {!adminMode && otpSent && (
         <Input
           label="OTP"
           placeholder="Enter OTP"
@@ -155,35 +156,33 @@ export default function LoginScreen() {
         />
       ) : (
         <>
-          <AppButton
-            style={styles.button}
-            status="primary"
-            onPress={handleLoginOrVerify}
-          >
-            {otpSent ? "Verify OTP" : "Login"}
-          </AppButton>
-          <AppButton
-            style={styles.button}
-            status="secondary"
-            onPress={() => handleAdminLogin("admin")}
-            disabled={adminLoading}
-          >
-            {adminLoading ? "Logging in..." : "Admin/Test Login"}
-          </AppButton>
+          {/* Only show normal login if not admin mode */}
+          {!adminMode && (
+            <AppButton
+              style={styles.button}
+              status="primary"
+              onPress={handleLoginOrVerify}
+            >
+              {otpSent ? "Verify OTP" : "Login"}
+            </AppButton>
+          )}
+          {/* Only show admin login if not already in admin mode */}
+          {!adminMode && (
+            <AppButton
+              style={styles.button}
+              status="secondary"
+              onPress={() => handleAdminLogin("admin")}
+              disabled={adminLoading}
+            >
+              {adminLoading ? "Logging in..." : "Admin/Test Login"}
+            </AppButton>
+          )}
         </>
       )}
-// ...existing code...
-      {/* <AppButton
-        style={styles.button}
-        status="primary"
-        onPress={handleLoginOrVerify}
-      >
-        {otpSent ? "Verify OTP" : "Login"}
-      </AppButton> */}
 
-      {!otpSent && (
+      {/* Only show signup link if not admin mode and not OTP */}
+      {!adminMode && !otpSent && (
         <View style={styles.footer}>
-          {/* <Text appearance="hint">{"Don't have an account?"}</Text> */}
           <Text appearance="hint">Don&apos;t have an account?</Text>
           <TouchableOpacity onPress={() => router.push("/signup")}>
             <Text style={styles.link}>Sign Up</Text>
