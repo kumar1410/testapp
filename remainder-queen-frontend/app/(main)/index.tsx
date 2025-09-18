@@ -7,6 +7,21 @@ import { Colors } from "@/constants/Colors";
 import { useAuth } from "@/context/AuthContext";
 import { useTasks } from "@/context/TaskContext";
 import { Input, Layout, Text } from "@ui-kitten/components";
+import { sendTestNotification } from "@/services/testNotification";
+  const [notifStatus, setNotifStatus] = useState<string>("");
+  const handleTestNotification = async () => {
+    setNotifStatus("Sending...");
+    try {
+      const res = await sendTestNotification();
+      if (res && res.isSuccess) {
+        setNotifStatus("Test notification sent!");
+      } else {
+        setNotifStatus(res?.message || "Failed to send notification");
+      }
+    } catch (e: any) {
+      setNotifStatus(e?.message || "Error sending notification");
+    }
+  };
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -148,7 +163,18 @@ export default function HomeScreen() {
           onSelect={setSelectedIndex}
         />
       </View>
-      <View style={[styles.content, { backgroundColor: getBackgroundColor() }]}>
+      <View style={[styles.content, { backgroundColor: getBackgroundColor() }]}> 
+        {/* Test Push Notification Button */}
+        <AppButton
+          style={{ marginBottom: 12 }}
+          status="info"
+          onPress={handleTestNotification}
+        >
+          Send Test Push Notification
+        </AppButton>
+        {!!notifStatus && (
+          <Text style={{ marginBottom: 8, color: notifStatus.includes("sent") ? 'green' : 'red' }}>{notifStatus}</Text>
+        )}
         <Input
           placeholder="Search"
           value={search}
