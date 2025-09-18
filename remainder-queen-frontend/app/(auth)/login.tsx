@@ -48,13 +48,17 @@ export default function LoginScreen() {
         return;
       }
 
+      console.log("Starting test login with username:", testUsername);
       const response = await testLogin({ username: testUsername });
+      console.log("Test login response:", response);
       
-      if (response.isSuccess && response.result?.token) {
+      if (response.isSuccess && response.result?.token && typeof response.result.token === 'string') {
+        console.log("Login successful, saving token and navigating");
         await secureStore.setItemAsync("jwtToken", response.result.token);
         login(response.result.token);
         router.replace("/(main)");
       } else {
+        console.log("Login failed:", response.errorMessages);
         setError(response.errorMessages?.[0] || "Login failed");
       }
     } catch (err: any) {

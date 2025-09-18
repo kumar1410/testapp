@@ -1,3 +1,6 @@
+const jwt = require("jsonwebtoken");
+const JWT_SECRET = process.env.JWT_SECRET;
+
 // Direct login for test/admin user (no OTP)
 exports.testLogin = async (req, res) => {
   try {
