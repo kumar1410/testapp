@@ -31,7 +31,7 @@ export default function RootLayout() {
   });
 
   const [ready, setReady] = React.useState(false);
-  const [initialRoute, setInitialRoute] = React.useState<string | null>(null);
+  const [initialRoute, setInitialRoute] = React.useState<"/(main)" | "/(auth)/login" | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -80,10 +80,6 @@ export default function RootLayout() {
     };
   }, []);
 
-  useEffect(() => {
-    console.log("Auth token present:", hasToken);
-  }, [hasToken]);
-
   if (!loaded || !ready) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -101,26 +97,17 @@ export default function RootLayout() {
         >
           <AuthProvider>
             <TaskProvider>
-              {hasToken === null ? null : hasToken ? (
-                <Redirect href="/(main)" />
-              ) : (
-                <Redirect href="/(auth)/login" />
-              )}
-              {hasToken !== null && (
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    headerStyle: { backgroundColor: "#FFFFFF" },
-                    headerTitleStyle: { fontFamily: "Poppins-SemiBold" },
-                    headerTintColor: "#11181C",
-                    headerBackTitle: " ",
-                    headerShadowVisible: false,
-                  }}
-                />
-              )}
-              {/* <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="(main)" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" /> */}
+              {initialRoute && <Redirect href={initialRoute} />}
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  headerStyle: { backgroundColor: "#FFFFFF" },
+                  headerTitleStyle: { fontFamily: "Poppins-SemiBold" },
+                  headerTintColor: "#11181C",
+                  headerBackTitle: " ",
+                  headerShadowVisible: false,
+                }}
+              />
             </TaskProvider>
           </AuthProvider>
           <StatusBar style="auto" />

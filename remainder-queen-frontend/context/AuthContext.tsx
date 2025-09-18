@@ -57,24 +57,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     loadUser();
   }, []);
 
-  const login = async (token: string) => {
-    await secureStore.setItemAsync("jwtToken", token);
-    try {
-      const decoded: any = jwtDecode(token);
-      console.log('Login decoded token:', decoded);
-      setUser({
-        phoneNo: decoded.phoneNo,
-        id: decoded.id,
-        name: decoded.name,
-      });
-    } catch (err) {
-      console.log("Invalid token", err);
-    }
-  };
-
   const logout = async () => {
     await secureStore.deleteItemAsync("jwtToken");
     setUser(null);
+    setIsAuthenticated(false);
   };
 
   const login = async (token: string) => {
@@ -93,15 +79,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsAuthenticated(true);
     } catch (err) {
       console.error("Login error:", err);
+      await secureStore.deleteItemAsync("jwtToken");
       setUser(null);
       setIsAuthenticated(false);
     }
-  };
-
-  const logout = async () => {
-    await secureStore.deleteItemAsync("jwtToken");
-    setUser(null);
-    setIsAuthenticated(false);
   };
 
   return (
